@@ -57,8 +57,8 @@ export default function CountrySelect({
               </span>
             </SelectValue>
           </SelectTrigger>
-          <SelectContent className="max-h-[300px]">
-            <div className="sticky top-0 p-2 bg-background border-b">
+          <SelectContent className="max-h-[300px] overflow-hidden">
+            <div className="sticky top-0 z-10 p-2 bg-background border-b">
               <Input
                 placeholder="Search countries..."
                 className="w-full"
@@ -74,7 +74,7 @@ export default function CountrySelect({
                 }}
               />
             </div>
-            <div className="country-list">
+            <div className="country-list overflow-y-auto max-h-[240px]">
               {countries.map((country) => (
                 <SelectItem 
                   key={country.value} 
