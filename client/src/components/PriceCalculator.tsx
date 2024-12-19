@@ -9,6 +9,10 @@ interface PriceCalculatorProps {
   pageCount: number;
 }
 
+// Make sure the public key exists
+if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
+  throw new Error("Missing Stripe public key");
+}
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 export default function PriceCalculator({ countryCode, pageCount }: PriceCalculatorProps) {
