@@ -7,15 +7,17 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2024-01-02",
+  apiVersion: "2024-12-18.acacia",
 });
 
 export function setupStripeRoutes(app: Express) {
   app.post("/api/create-payment", async (req, res) => {
     try {
+      console.log("Creating payment session:", req.body);
       const { countryCode, pageCount } = req.body;
 
       if (!pageCount || pageCount < 1) {
+        console.log("Invalid page count:", pageCount);
         return res.status(400).json({ error: "Invalid page count" });
       }
 
@@ -40,8 +42,8 @@ export function setupStripeRoutes(app: Express) {
           },
         ],
         mode: "payment",
-        success_url: `${process.env.REPLIT_DOMAINS || 'http://localhost:5000'}/success`,
-        cancel_url: `${process.env.REPLIT_DOMAINS || 'http://localhost:5000'}/cancel`,
+        success_url: `${process.env.REPLIT_DOMAINS?.split(',')[0] || `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`}/success`,
+        cancel_url: `${process.env.REPLIT_DOMAINS?.split(',')[0] || `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`}/cancel`,
         metadata: {
           countryCode,
           pageCount: pageCount.toString(),

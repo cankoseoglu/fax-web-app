@@ -22,11 +22,46 @@ export function registerRoutes(app: Express): Server {
     res.json({ total });
   });
 
-  // Setup Stripe payment routes
-  setupStripeRoutes(app);
-
   // Setup Documo fax routes
   setupDocomoRoutes(app);
+
+  // Setup Stripe webhook to handle successful payments
+  app.post("/api/stripe/webhook", async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    
+    try {
+      const event = stripe.webhooks.constructEvent(
+        req.body,
+        sig as string,
+        process.env.STRIPE_WEBHOOK_SECRET || ''
+      );
+
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        const transaction = await db.query.transactions.findFirst({
+          where: eq(transactions.stripePaymentId, session.id)
+        });
+
+        if (transaction && transaction.files) {
+          // Send fax through Documo
+          const faxId = await sendFax(transaction.files, transaction.recipientNumber);
+          
+          // Update transaction with fax ID
+          await db.update(transactions)
+            .set({ documoFaxId: faxId })
+            .where(eq(transactions.id, transaction.id));
+        }
+      }
+
+      res.json({ received: true });
+    } catch (error) {
+      console.error("Webhook error:", error);
+      res.status(400).send(`Webhook Error: ${error.message}`);
+    }
+  });
+
+  // Setup other Stripe routes
+  setupStripeRoutes(app);
 
   // Fax sending endpoint
   app.post("/api/send-fax", upload.array("files"), async (req, res) => {
@@ -54,6 +89,5 @@ export function registerRoutes(app: Express): Server {
   });
 
   const httpServer = createServer(app);
-  app.set('trust proxy', 1);
   return httpServer;
 }

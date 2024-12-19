@@ -13,9 +13,41 @@ export default function FaxUpload({ files, onFilesChange }: FaxUploadProps) {
       'image/*': ['.png', '.jpg', '.jpeg'],
       'application/pdf': ['.pdf']
     },
-    onDrop: (acceptedFiles) => {
-      onFilesChange([...files, ...acceptedFiles]);
-    }
+    onDrop: (acceptedFiles, rejectedFiles) => {
+      // Log detailed information about the dropped files
+      console.log('Files dropped:', { 
+        accepted: acceptedFiles.map(f => ({ 
+          name: f.name, 
+          size: f.size,
+          type: f.type 
+        })),
+        rejected: rejectedFiles.map(f => ({ 
+          name: f.file.name, 
+          size: f.file.size,
+          type: f.file.type,
+          errors: f.errors
+        }))
+      });
+
+      // Handle rejected files with proper error messaging
+      if (rejectedFiles.length > 0) {
+        console.warn('Files rejected:', rejectedFiles);
+        // Don't add rejected files to the state
+        return;
+      }
+
+      // Validate file sizes
+      const validFiles = acceptedFiles.filter(file => file.size <= 5 * 1024 * 1024);
+      if (validFiles.length !== acceptedFiles.length) {
+        console.warn('Some files exceeded size limit');
+        return;
+      }
+
+      // Update state with only valid files
+      onFilesChange([...files, ...validFiles]);
+    },
+    maxSize: 5 * 1024 * 1024, // 5MB limit
+    multiple: true
   });
 
   const removeFile = (index: number) => {
