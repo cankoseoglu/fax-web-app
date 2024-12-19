@@ -52,6 +52,7 @@ export async function sendFax(files: Buffer[], recipientNumber: string): Promise
     return response.data.id;
   } catch (error) {
     console.error("Documo sendFax error:", error);
-    throw new Error("Failed to send fax through Documo");
+    console.error("Documo API response:", error.response?.data);
+    throw new Error(`Failed to send fax through Documo: ${error.message}`);
   }
 }
