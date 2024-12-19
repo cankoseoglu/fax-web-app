@@ -1,21 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
+import { useToast } from "@/hooks/use-toast";
 
 interface PriceCalculatorProps {
   countryCode: string;
   pageCount: number;
 }
 
-// Make sure the public key exists
-console.log("Stripe Key:", import.meta.env.VITE_STRIPE_PUBLIC_KEY);
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  console.error("Stripe public key is missing");
-  throw new Error("Missing Stripe public key");
-}
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+// Initialize Stripe only if the key exists
+const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY 
+  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
+  : null;
 
 export default function PriceCalculator({ countryCode, pageCount }: PriceCalculatorProps) {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -30,7 +28,17 @@ export default function PriceCalculator({ countryCode, pageCount }: PriceCalcula
     enabled: pageCount > 0
   });
 
+  const { toast } = useToast();
   const handlePayment = async () => {
+    if (!stripePromise) {
+      toast({
+        variant: "destructive",
+        title: "Payment Error",
+        description: "Payment system is not properly configured. Please try again later.",
+      });
+      return;
+    }
+
     setIsProcessing(true);
     try {
       const response = await fetch('/api/create-payment', {
@@ -39,11 +47,29 @@ export default function PriceCalculator({ countryCode, pageCount }: PriceCalcula
         body: JSON.stringify({ countryCode, pageCount }),
       });
       
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+
       const { sessionId } = await response.json();
       const stripe = await stripePromise;
-      await stripe?.redirectToCheckout({ sessionId });
+      
+      if (!stripe) {
+        throw new Error("Failed to initialize payment system");
+      }
+
+      const { error } = await stripe.redirectToCheckout({ sessionId });
+      if (error) {
+        throw error;
+      }
     } catch (error) {
       console.error('Payment error:', error);
+      toast({
+        variant: "destructive",
+        title: "Payment Failed",
+        description: error instanceof Error ? error.message : "Failed to process payment",
+      });
     } finally {
       setIsProcessing(false);
     }
