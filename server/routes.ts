@@ -54,5 +54,6 @@ export function registerRoutes(app: Express): Server {
   });
 
   const httpServer = createServer(app);
+  app.set('trust proxy', 1);
   return httpServer;
 }
