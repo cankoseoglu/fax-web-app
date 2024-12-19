@@ -40,7 +40,9 @@ export function setupStripeRoutes(app: Express) {
           },
         ],
         mode: "payment",
-        success_url: process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS}/success` : 'http://localhost:5000/success',
+        success_url: process.env.REPLIT_DOMAINS 
+          ? `https://${process.env.REPLIT_DOMAINS}/success?transaction_id={CHECKOUT_SESSION_ID}` 
+          : 'http://localhost:5000/success?transaction_id={CHECKOUT_SESSION_ID}',
         cancel_url: process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS}/cancel` : 'http://localhost:5000/cancel',
         metadata: {
           countryCode,
