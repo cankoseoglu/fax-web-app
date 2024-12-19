@@ -10,6 +10,8 @@ interface PriceCalculatorProps {
   pageCount: number;
 }
 
+// Debug log to check environment variable
+console.log("Stripe key exists:", !!import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY 
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
   : Promise.reject(new Error("Stripe public key not found"));
