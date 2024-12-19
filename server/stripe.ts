@@ -7,7 +7,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2024-01-02",
+  apiVersion: "2023-10-16",
 });
 
 export function setupStripeRoutes(app: Express) {
@@ -51,7 +51,9 @@ export function setupStripeRoutes(app: Express) {
       res.json({ sessionId: session.id });
     } catch (error) {
       console.error("Stripe payment error:", error);
-      res.status(500).json({ error: "Failed to create payment session" });
+      const errorMessage = error instanceof Error ? error.message : "Failed to create payment session";
+      console.error("Stripe payment creation error details:", error);
+      res.status(500).json({ error: errorMessage });
     }
   });
 
