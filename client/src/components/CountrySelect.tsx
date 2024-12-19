@@ -43,31 +43,57 @@ export default function CountrySelect({
             if (country) onChange(country);
           }}
         >
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue>
               <span className="flex items-center gap-2">
-                <img
-                  src={`https://flagcdn.com/w20/${value.value.toLowerCase()}.png`}
-                  alt={value.label}
-                  className="w-5 h-auto"
-                />
-                {value.label}
+                <div className="relative w-6 h-4 overflow-hidden rounded shadow-sm">
+                  <img
+                    src={`https://flagcdn.com/w40/${value.value.toLowerCase()}.png`}
+                    alt={value.label}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                </div>
+                <span className="font-medium">{value.label}</span>
               </span>
             </SelectValue>
           </SelectTrigger>
-          <SelectContent>
-            {countries.map((country) => (
-              <SelectItem key={country.value} value={country.value}>
-                <span className="flex items-center gap-2">
-                  <img
-                    src={`https://flagcdn.com/w20/${country.value.toLowerCase()}.png`}
-                    alt={country.label}
-                    className="w-5 h-auto"
-                  />
-                  {country.label}
-                </span>
-              </SelectItem>
-            ))}
+          <SelectContent className="max-h-[300px]">
+            <div className="sticky top-0 p-2 bg-background border-b">
+              <Input
+                placeholder="Search countries..."
+                className="w-full"
+                onChange={(e) => {
+                  const searchList = document.querySelector('.country-list');
+                  if (searchList) {
+                    const query = e.target.value.toLowerCase();
+                    Array.from(searchList.children).forEach((item: Element) => {
+                      const text = item.textContent?.toLowerCase() || '';
+                      (item as HTMLElement).style.display = text.includes(query) ? 'block' : 'none';
+                    });
+                  }
+                }}
+              />
+            </div>
+            <div className="country-list">
+              {countries.map((country) => (
+                <SelectItem 
+                  key={country.value} 
+                  value={country.value}
+                  className="hover:bg-accent cursor-pointer"
+                >
+                  <span className="flex items-center gap-2">
+                    <div className="relative w-6 h-4 overflow-hidden rounded shadow-sm">
+                      <img
+                        src={`https://flagcdn.com/w40/${country.value.toLowerCase()}.png`}
+                        alt={country.label}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    </div>
+                    <span>{country.label}</span>
+                  </span>
+                </SelectItem>
+              ))}
+            </div>
           </SelectContent>
         </Select>
       </div>
