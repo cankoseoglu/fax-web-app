@@ -13,7 +13,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 export function setupStripeRoutes(app: Express) {
   app.post("/api/create-payment", async (req, res) => {
     try {
-      console.log("Creating payment session:", req.body);
+      console.log("Creating payment intent:", req.body);
       const { countryCode, pageCount } = req.body;
 
       if (!pageCount || pageCount < 1) {
@@ -26,34 +26,27 @@ export function setupStripeRoutes(app: Express) {
       const countryMultiplier = countryCode === 'US' ? 1 : 1.5;
       const amount = Math.round(pageCount * basePrice * countryMultiplier * 100); // Convert to cents
 
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        line_items: [
-          {
-            price_data: {
-              currency: "usd",
-              product_data: {
-                name: "Fax Service",
-                description: `${pageCount} page${pageCount > 1 ? 's' : ''} to ${countryCode}`,
-              },
-              unit_amount: amount,
-            },
-            quantity: 1,
-          },
-        ],
-        mode: "payment",
-        success_url: `${process.env.REPLIT_DOMAINS?.split(',')[0] || `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`}/success`,
-        cancel_url: `${process.env.REPLIT_DOMAINS?.split(',')[0] || `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`}/cancel`,
+      // Create a PaymentIntent with manual capture
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount,
+        currency: 'usd',
+        capture_method: 'manual', // This allows us to authorize the payment but capture it later
+        automatic_payment_methods: {
+          enabled: true,
+        },
         metadata: {
           countryCode,
           pageCount: pageCount.toString(),
         },
       });
 
-      res.json({ sessionId: session.id });
+      res.json({ 
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id
+      });
     } catch (error) {
       console.error("Stripe payment error:", error);
-      res.status(500).json({ error: "Failed to create payment session" });
+      res.status(500).json({ error: "Failed to create payment intent" });
     }
   });
 
