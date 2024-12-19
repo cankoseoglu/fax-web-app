@@ -10,7 +10,9 @@ interface PriceCalculatorProps {
 }
 
 // Make sure the public key exists
+console.log("Stripe Key:", import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
+  console.error("Stripe public key is missing");
   throw new Error("Missing Stripe public key");
 }
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);

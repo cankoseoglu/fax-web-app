@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import Stripe from "stripe";
 
+console.log("Server Stripe Key exists:", !!process.env.STRIPE_SECRET_KEY);
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error("STRIPE_SECRET_KEY is required");
 }
