@@ -37,8 +37,10 @@ export function registerRoutes(app: Express): Server {
       const files = (req.files || []) as Express.Multer.File[];
       const { countryCode, recipientNumber, paymentIntentId } = req.body;
 
-      // Allow "test" as valid payment for Swagger testing
-      if (paymentIntentId !== "test" && !paymentIntentId.startsWith("pi_")) {
+      // For Swagger testing
+      if (paymentIntentId === "test") {
+        console.log("Test mode: Bypassing payment verification");
+      } else if (!paymentIntentId.startsWith("pi_")) {
         return res.status(400).json({ error: "Invalid payment intent ID" });
       }
 

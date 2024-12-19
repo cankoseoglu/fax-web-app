@@ -34,11 +34,15 @@ export function setupDocomoRoutes(app: Express) {
 
 export async function sendFax(files: Buffer[], recipientNumber: string): Promise<string> {
   try {
+    console.log(`Attempting to send fax to ${recipientNumber} with ${files.length} files`);
+    
     // First create a fax object
     const faxResponse = await documoClient.post("/faxes", {
       to: recipientNumber,
       quality: "high",
     });
+    
+    console.log("Fax object created:", faxResponse.data);
     
     const faxId = faxResponse.data.id;
     
@@ -55,8 +59,19 @@ export async function sendFax(files: Buffer[], recipientNumber: string): Promise
     await documoClient.post(`/faxes/${faxId}/send`);
 
     return faxId;
-  } catch (error) {
-    console.error("Documo sendFax error:", error);
-    throw new Error("Failed to send fax through Documo");
+  } catch (error: any) {
+    console.error("Documo sendFax error:", {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
+    
+    if (error.response?.status === 401) {
+      throw new Error("Authentication failed with Documo API");
+    } else if (error.response?.status === 400) {
+      throw new Error(`Invalid request: ${error.response.data.message || 'Bad request'}`);
+    } else {
+      throw new Error("Failed to send fax through Documo: " + error.message);
+    }
   }
 }
