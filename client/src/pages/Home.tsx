@@ -3,7 +3,8 @@ import FaxUpload from "@/components/FaxUpload";
 import CountrySelect from "@/components/CountrySelect";
 import PriceCalculator from "@/components/PriceCalculator";
 import ProgressTracker from "@/components/ProgressTracker";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSendFax, useFaxStatus } from "@/lib/api";
 
 export default function Home() {
   const [selectedCountry, setSelectedCountry] = useState({ value: 'US', label: 'United States' });
@@ -11,6 +12,32 @@ export default function Home() {
   const [faxStatus, setFaxStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isPhoneValid, setIsPhoneValid] = useState(false);
+  const [transactionId, setTransactionId] = useState<string>();
+  const { mutateAsync: sendFax } = useSendFax();
+  const { data: statusData } = useFaxStatus(transactionId);
+
+  // Update status when transaction status changes
+  useEffect(() => {
+    if (statusData?.status) {
+      setFaxStatus(statusData.status);
+    }
+  }, [statusData]);
+
+  const handleFaxSend = async (paymentIntentId: string) => {
+    try {
+      setFaxStatus('processing');
+      const result = await sendFax({
+        files,
+        countryCode: selectedCountry.value,
+        recipientNumber: phoneNumber,
+        paymentIntentId
+      });
+      setTransactionId(result.transactionId);
+    } catch (error) {
+      console.error('Failed to send fax:', error);
+      setFaxStatus('error');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background p-6">

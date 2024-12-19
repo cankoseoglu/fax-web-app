@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 export const useSendFax = () => {
   return useMutation({
@@ -30,5 +30,21 @@ export const useSendFax = () => {
 
       return response.json();
     },
+  });
+};
+
+export const useFaxStatus = (transactionId?: string) => {
+  return useQuery({
+    queryKey: ['faxStatus', transactionId],
+    queryFn: async () => {
+      const response = await fetch(`/api/fax-status/${transactionId}`);
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      return response.json();
+    },
+    enabled: !!transactionId,
+    refetchInterval: (data) => 
+      data?.status === 'processing' ? 2000 : false,
   });
 };

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupStripeRoutes } from "./stripe";
-import { setupDocomoRoutes } from "./documo";
+import { setupDocomoRoutes, sendFax } from "./documo";
 import multer from "multer";
 import { db } from "@db";
 import { transactions } from "@db/schema";
@@ -44,12 +44,47 @@ export function registerRoutes(app: Express): Server {
           amount: 0, // Will be updated after payment confirmation
           stripePaymentId: paymentIntentId,
           documoFaxId: "", // Will be updated after fax is sent
+          createdAt: new Date(),
+          updatedAt: new Date()
         })
         .returning();
 
+      // Send fax using Documo API
+      const faxId = await sendFax(
+        files.map(f => f.buffer),
+        recipientNumber
+      );
+
+      // Update transaction with fax ID
+      await db.update(transactions)
+        .set({ documoFaxId: faxId })
+        .where(eq(transactions.id, transaction.id));
+
       res.json({ transactionId: transaction.id });
     } catch (error) {
+      console.error("Fax sending error:", error);
       res.status(500).json({ error: "Failed to process fax" });
+    }
+  });
+
+  // Add fax status endpoint
+  app.get("/api/fax-status/:transactionId", async (req, res) => {
+    try {
+      const { transactionId } = req.params;
+      const [transaction] = await db
+        .select()
+        .from(transactions)
+        .where(eq(transactions.id, parseInt(transactionId)))
+        .limit(1);
+
+      if (!transaction) {
+        return res.status(404).json({ error: "Transaction not found" });
+      }
+
+      res.json({ status: transaction.status });
+    } catch (error) {
+      console.error("Fax status error:", error);
+      res.status(500).json({ error: "Failed to fetch fax status" });
     }
   });
 
