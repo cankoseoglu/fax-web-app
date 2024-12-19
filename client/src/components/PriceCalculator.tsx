@@ -3,18 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
-import { useToast } from "../hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface PriceCalculatorProps {
   countryCode: string;
   pageCount: number;
 }
 
-// Debug log to check environment variable
-console.log("Stripe key exists:", !!import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+// Initialize Stripe only if the key exists
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY 
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
-  : Promise.reject(new Error("Stripe public key not found"));
+  : null;
 
 export default function PriceCalculator({ countryCode, pageCount }: PriceCalculatorProps) {
   const [isProcessing, setIsProcessing] = useState(false);

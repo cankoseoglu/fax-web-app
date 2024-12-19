@@ -2,8 +2,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { parsePhoneNumberFromString, getCountries, CountryCode } from 'libphonenumber-js';
-import { useState, useEffect } from 'react';
-import { useToast } from "@/hooks/use-toast";
+import { useState } from 'react';
 
 const countries = getCountries().map(country => ({
   value: country,
@@ -24,11 +23,6 @@ export default function CountrySelect({
   onPhoneNumberChange 
 }: CountrySelectProps) {
   const [isPhoneValid, setIsPhoneValid] = useState(false);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    console.log('CountrySelect mounted with:', { value, phoneNumber });
-  }, []);
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newNumber = e.target.value;
