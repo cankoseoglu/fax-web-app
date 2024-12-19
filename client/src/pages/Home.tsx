@@ -9,6 +9,8 @@ export default function Home() {
   const [selectedCountry, setSelectedCountry] = useState({ value: 'US', label: 'United States' });
   const [files, setFiles] = useState<File[]>([]);
   const [faxStatus, setFaxStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [isPhoneValid, setIsPhoneValid] = useState(false);
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -24,6 +26,11 @@ export default function Home() {
               <CountrySelect 
                 value={selectedCountry}
                 onChange={setSelectedCountry}
+                phoneNumber={phoneNumber}
+                onPhoneNumberChange={(number, isValid) => {
+                  setPhoneNumber(number);
+                  setIsPhoneValid(isValid);
+                }}
               />
               
               <FaxUpload 
