@@ -63,12 +63,15 @@ export default function CountrySelect({
                 placeholder="Search countries..."
                 className="w-full"
                 onChange={(e) => {
+                  e.preventDefault();
                   const searchList = document.querySelector('.country-list');
+                  const query = e.target.value.toLowerCase();
                   if (searchList) {
-                    const query = e.target.value.toLowerCase();
-                    Array.from(searchList.children).forEach((item: Element) => {
-                      const text = item.textContent?.toLowerCase() || '';
-                      (item as HTMLElement).style.display = text.includes(query) ? 'block' : 'none';
+                    requestAnimationFrame(() => {
+                      Array.from(searchList.children).forEach((item: Element) => {
+                        const text = item.textContent?.toLowerCase() || '';
+                        (item as HTMLElement).style.display = text.includes(query) ? 'block' : 'none';
+                      });
                     });
                   }
                 }}
