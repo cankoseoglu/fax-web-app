@@ -12,6 +12,14 @@ export default function Home() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isPhoneValid, setIsPhoneValid] = useState(false);
 
+  console.log('Current state:', {
+    selectedCountry,
+    filesCount: files.length,
+    faxStatus,
+    phoneNumber,
+    isPhoneValid
+  });
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto space-y-6">
