@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupStripeRoutes } from "./stripe";
 import { setupDocomoRoutes, sendFax } from "./documo";
+import { setupSwagger } from "./swagger";
 import multer from "multer";
 import { db } from "@db";
 import { transactions } from "@db/schema";
@@ -10,6 +11,8 @@ import { eq } from "drizzle-orm";
 const upload = multer({ storage: multer.memoryStorage() });
 
 export function registerRoutes(app: Express): Server {
+  // Setup Swagger documentation
+  setupSwagger(app);
   // Price calculation endpoint
   app.get("/api/price", async (req, res) => {
     const { country, pages } = req.query;
