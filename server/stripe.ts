@@ -40,8 +40,8 @@ export function setupStripeRoutes(app: Express) {
           },
         ],
         mode: "payment",
-        success_url: `${process.env.REPLIT_DOMAINS || 'http://localhost:5000'}/success`,
-        cancel_url: `${process.env.REPLIT_DOMAINS || 'http://localhost:5000'}/cancel`,
+        success_url: process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS}/success` : 'http://localhost:5000/success',
+        cancel_url: process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS}/cancel` : 'http://localhost:5000/cancel',
         metadata: {
           countryCode,
           pageCount: pageCount.toString(),
