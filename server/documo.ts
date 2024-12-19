@@ -40,8 +40,8 @@ export async function sendFax(files: Buffer[], recipientNumber: string): Promise
   try {
     console.log(`Attempting to send fax to ${recipientNumber} with ${files.length} files`);
     
-    // For Swagger testing, return a mock fax ID if no API key
-    if (!hasDocomoApiKey) {
+    // Only use mock fax ID if explicitly in test mode AND no API key
+    if (!hasDocomoApiKey && process.env.NODE_ENV === 'test') {
       console.log("Test mode: Using mock fax ID for testing");
       return "test_fax_" + Math.random().toString(36).substring(7);
     }
@@ -76,10 +76,15 @@ export async function sendFax(files: Buffer[], recipientNumber: string): Promise
       status: error.response?.status
     });
     
-    // For Swagger testing without API key
-    if (!hasDocomoApiKey) {
+    // Only fall back to test mode if explicitly testing AND no API key
+    if (!hasDocomoApiKey && process.env.NODE_ENV === 'test') {
       console.log("Test mode: Using mock fax ID despite error");
       return "test_fax_" + Math.random().toString(36).substring(7);
+    }
+    
+    // If we have an API key but got a 401, there's likely a configuration issue
+    if (hasDocomoApiKey && error.response?.status === 401) {
+      console.error("Documo API key is present but authentication failed. Please check the API key configuration.");
     }
     
     if (error.response?.status === 401) {
