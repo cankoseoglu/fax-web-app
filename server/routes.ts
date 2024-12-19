@@ -37,6 +37,11 @@ export function registerRoutes(app: Express): Server {
       const files = (req.files || []) as Express.Multer.File[];
       const { countryCode, recipientNumber, paymentIntentId } = req.body;
 
+      // Allow "test" as valid payment for Swagger testing
+      if (paymentIntentId !== "test" && !paymentIntentId.startsWith("pi_")) {
+        return res.status(400).json({ error: "Invalid payment intent ID" });
+      }
+
       // Create transaction record
       const [transaction] = await db.insert(transactions)
         .values({
