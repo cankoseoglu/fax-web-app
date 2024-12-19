@@ -60,11 +60,14 @@ export default function PriceCalculator({ countryCode, pageCount }: PriceCalcula
         throw new Error("Failed to initialize payment system");
       }
 
-      const { error: confirmError } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: elements.getElement('card'),
-          billing_details: {
-            name: 'Jenny Rosen', // This should come from a form
+      const { error: confirmError } = await stripe.confirmPayment({
+        clientSecret,
+        confirmParams: {
+          return_url: window.location.origin + '/success',
+          payment_method_data: {
+            billing_details: {
+              name: 'User', // You can add a form to collect this
+            },
           },
         },
       });
