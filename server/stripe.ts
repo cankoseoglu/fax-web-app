@@ -26,14 +26,11 @@ export function setupStripeRoutes(app: Express) {
       const countryMultiplier = countryCode === 'US' ? 1 : 1.5;
       const amount = Math.round(pageCount * basePrice * countryMultiplier * 100); // Convert to cents
 
-      // Create a PaymentIntent with manual capture
+      // Create a PaymentIntent
       const paymentIntent = await stripe.paymentIntents.create({
         amount,
         currency: 'usd',
-        capture_method: 'manual', // This allows us to authorize the payment but capture it later
-        automatic_payment_methods: {
-          enabled: true,
-        },
+        payment_method_types: ['card'],
         metadata: {
           countryCode,
           pageCount: pageCount.toString(),
