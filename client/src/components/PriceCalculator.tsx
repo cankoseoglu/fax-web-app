@@ -53,28 +53,14 @@ export default function PriceCalculator({ countryCode, pageCount }: PriceCalcula
         throw new Error(error);
       }
 
-      const { clientSecret, paymentIntentId } = await response.json();
+      const { sessionId } = await response.json();
       const stripe = await stripePromise;
       
       if (!stripe) {
         throw new Error("Failed to initialize payment system");
       }
 
-      const { error: confirmError } = await stripe.confirmPayment({
-        clientSecret,
-        confirmParams: {
-          return_url: window.location.origin + '/success',
-          payment_method_data: {
-            billing_details: {
-              name: 'User', // You can add a form to collect this
-            },
-          },
-        },
-      });
-
-      if (confirmError) {
-        throw new Error(confirmError.message);
-      }
+      const { error } = await stripe.redirectToCheckout({ sessionId });
       if (error) {
         throw error;
       }
