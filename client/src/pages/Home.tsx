@@ -15,7 +15,7 @@ export default function Home() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isPhoneValid, setIsPhoneValid] = useState(false);
   const [transactionId, setTransactionId] = useState<string>();
-  // const { mutateAsync: sendFax } = useSendFax();
+  const { mutateAsync: sendFax } = useSendFax();
   const { data: statusData } = useFaxStatus(transactionId);
 
   // Update status when transaction status changes
@@ -28,7 +28,7 @@ export default function Home() {
   const handleFaxSend = async (paymentIntentId: string) => {
     try {
       setFaxStatus('processing');
-      const result = await useSendFax({
+      const result = await sendFax({
         files,
         countryCode: selectedCountry.value,
         recipientNumber: phoneNumber,
