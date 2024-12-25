@@ -10,6 +10,7 @@ interface PriceCalculatorProps {
   pageCount: number;
   files: File[];
   phoneNumber: string;
+  onSubmit: (paymentIntentId: string) => Promise<void>;
 }
 
 // Initialize Stripe after fetching the key
@@ -40,7 +41,7 @@ const stripePromise = fetch('/api/stripe/config', {
 
 const BASE_PRICE = 0.40; // Base price per page
 
-export default function PriceCalculator({ countryCode, pageCount, files, phoneNumber }: PriceCalculatorProps) {
+export default function PriceCalculator({ countryCode, pageCount, files, phoneNumber, onSubmit }: PriceCalculatorProps) {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const { data: price, isLoading } = useQuery({

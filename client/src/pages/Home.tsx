@@ -72,6 +72,7 @@ export default function Home() {
                 pageCount={files.reduce((count, file) => count + 1, 0)}
                 files={files}
                 phoneNumber={phoneNumber}
+                onSubmit={handleFaxSend}
               />
             </div>
           </CardContent>
