@@ -8,14 +8,39 @@ import { useToast } from "@/hooks/use-toast";
 interface PriceCalculatorProps {
   countryCode: string;
   pageCount: number;
+  files: File[];
+  phoneNumber: string;
 }
 
-// Initialize Stripe only if the key exists
-const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY 
-  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
-  : null;
+// Initialize Stripe after fetching the key
+const stripePromise = fetch('/api/stripe/config', {
+  headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  },
+})
+  .then(response => {
+    if (!response.ok) {
+      console.error('Stripe config response:', response.status, response.statusText);
+      throw new Error('Failed to fetch Stripe configuration');
+    }
+    return response.json();
+  })
+  .then(config => {
+    console.log('Fetched Stripe config:', config);
+    if (!config.publishableKey) {
+      throw new Error('No Stripe publishable key available');
+    }
+    return loadStripe(config.publishableKey);
+  })
+  .catch(error => {
+    console.error('Failed to initialize Stripe:', error);
+    return null;
+  });
 
-export default function PriceCalculator({ countryCode, pageCount }: PriceCalculatorProps) {
+const BASE_PRICE = 0.40; // Base price per page
+
+export default function PriceCalculator({ countryCode, pageCount, files, phoneNumber }: PriceCalculatorProps) {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const { data: price, isLoading } = useQuery({
@@ -41,6 +66,7 @@ export default function PriceCalculator({ countryCode, pageCount }: PriceCalcula
 
     setIsProcessing(true);
     try {
+      // First create the payment session
       const response = await fetch('/api/create-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -53,6 +79,24 @@ export default function PriceCalculator({ countryCode, pageCount }: PriceCalcula
       }
 
       const { sessionId } = await response.json();
+
+      // Then store the fax details
+      const formData = new FormData();
+      files.forEach(file => formData.append("files", file));
+      formData.append("countryCode", countryCode);
+      formData.append("recipientNumber", phoneNumber);
+      formData.append("stripeSessionId", sessionId);
+
+      const storeResponse = await fetch('/api/store-fax', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!storeResponse.ok) {
+        throw new Error('Failed to store fax details');
+      }
+
+      // Finally redirect to Stripe checkout
       const stripe = await stripePromise;
       
       if (!stripe) {
@@ -86,7 +130,7 @@ export default function PriceCalculator({ countryCode, pageCount }: PriceCalcula
             <div className="space-y-1">
               <div className="flex items-center justify-between text-sm">
                 <span>Base Price per Page:</span>
-                <span className="font-medium">$0.10</span>
+                <span className="font-medium">$0.40</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span>Country Multiplier ({countryCode}):</span>

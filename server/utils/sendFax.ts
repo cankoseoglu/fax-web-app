@@ -1,9 +1,4 @@
-import express, { type Express } from "express";
 import axios from "axios";
-import { db } from "../db/db";
-import { transactions } from "../db/schema";
-import { eq } from "drizzle-orm";
-import type { TransactionStatusType } from "../db/schema";
 
 // Check if we have the API key
 const hasDocomoApiKey = !!process.env.DOCUMO_API_KEY;
@@ -17,25 +12,7 @@ const documoClient = axios.create({
   }
 });
 
-export function setupDocomoRoutes(app: Express) {
-  app.post("/api/documo/webhook", async (req, res) => {
-    const { faxId, status } = req.body;
-
-    try {
-      await db
-        .update(transactions)
-        .set({ status: status as TransactionStatusType })
-        .where(eq(transactions.documoFaxId, faxId));
-
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Documo webhook error:", error);
-      res.status(500).json({ error: "Failed to update fax status" });
-    }
-  });
-}
-
-export async function sendFax(files: Buffer[], recipientNumber: string): Promise<string> {
+export async function sendFax(files: string[], recipientNumber: string): Promise<string> {
   try {
     console.log(`Attempting to send fax to ${recipientNumber} with ${files.length} files`);
     
@@ -56,11 +33,12 @@ export async function sendFax(files: Buffer[], recipientNumber: string): Promise
     const faxId = faxResponse.data.id;
     
     // Then upload each file as an attachment
-    const uploadPromises = files.map(file =>
-      documoClient.post(`/faxes/${faxId}/attachments`, file, {
+    const uploadPromises = files.map(file => {
+      const buffer = Buffer.from(file, 'base64');
+      return documoClient.post(`/faxes/${faxId}/attachments`, buffer, {
         headers: { "Content-Type": "application/pdf" }
-      })
-    );
+      });
+    });
 
     await Promise.all(uploadPromises);
     
@@ -94,4 +72,4 @@ export async function sendFax(files: Buffer[], recipientNumber: string): Promise
       throw new Error("Failed to send fax through Documo: " + error.message);
     }
   }
-}
+} 

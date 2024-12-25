@@ -6,27 +6,29 @@ import ProgressTracker from "@/components/ProgressTracker";
 import { useState, useEffect } from "react";
 import { useSendFax, useFaxStatus } from "@/lib/api";
 
+type UIStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
 export default function Home() {
   const [selectedCountry, setSelectedCountry] = useState({ value: 'US', label: 'United States' });
   const [files, setFiles] = useState<File[]>([]);
-  const [faxStatus, setFaxStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
+  const [faxStatus, setFaxStatus] = useState<UIStatus>('pending');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isPhoneValid, setIsPhoneValid] = useState(false);
   const [transactionId, setTransactionId] = useState<string>();
-  const { mutateAsync: sendFax } = useSendFax();
+  // const { mutateAsync: sendFax } = useSendFax();
   const { data: statusData } = useFaxStatus(transactionId);
 
   // Update status when transaction status changes
   useEffect(() => {
     if (statusData?.status) {
-      setFaxStatus(statusData.status);
+      setFaxStatus(statusData.status as UIStatus);
     }
   }, [statusData]);
 
   const handleFaxSend = async (paymentIntentId: string) => {
     try {
       setFaxStatus('processing');
-      const result = await sendFax({
+      const result = await useSendFax({
         files,
         countryCode: selectedCountry.value,
         recipientNumber: phoneNumber,
@@ -35,7 +37,7 @@ export default function Home() {
       setTransactionId(result.transactionId);
     } catch (error) {
       console.error('Failed to send fax:', error);
-      setFaxStatus('error');
+      setFaxStatus('failed');
     }
   };
 
@@ -68,12 +70,14 @@ export default function Home() {
               <PriceCalculator 
                 countryCode={selectedCountry.value}
                 pageCount={files.reduce((count, file) => count + 1, 0)}
+                files={files}
+                phoneNumber={phoneNumber}
               />
             </div>
           </CardContent>
         </Card>
 
-        {faxStatus !== 'idle' && (
+        {faxStatus !== 'pending' && (
           <Card>
             <CardContent className="py-6">
               <ProgressTracker status={faxStatus} />

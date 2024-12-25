@@ -4,7 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, ArrowLeft } from "lucide-react";
 import ProgressTracker from "@/components/ProgressTracker";
-import { useFaxStatus } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
+
+interface Transaction {
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  documoFaxId: string;
+  error?: string;
+  amount: string;
+  recipientNumber: string;
+  pageCount: number;
+  countryCode: string;
+  createdAt: string;
+}
 
 export default function PaymentSuccess() {
   const [, setLocation] = useLocation();
@@ -12,9 +23,21 @@ export default function PaymentSuccess() {
 
   // Get transaction ID from URL if available
   const searchParams = new URLSearchParams(window.location.search);
-  const transactionId = searchParams.get('transaction_id');
+  const sessionId = searchParams.get('transaction_id');
   
-  const { data: statusData } = useFaxStatus(transactionId || undefined);
+  const { data: transaction, isLoading } = useQuery<Transaction, Error, Transaction, [string, string | null]>({
+    queryKey: ['transaction', sessionId],
+    queryFn: async ({ queryKey }) => {
+      const [, id] = queryKey;
+      if (!id) throw new Error('No session ID provided');
+      const response = await fetch(`/api/transaction/${id}`);
+      if (!response.ok) throw new Error('Failed to fetch transaction');
+      return response.json();
+    },
+    enabled: !!sessionId,
+    refetchInterval: (query) => 
+      query.state.data?.status === 'processing' ? 2000 : false,
+  });
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -31,21 +54,44 @@ export default function PaymentSuccess() {
               Your payment has been processed successfully. We're now preparing to send your fax.
             </p>
 
-            {transactionId && (
+            {transaction && (
               <div className="space-y-4">
-                <h3 className="font-medium">Fax Status</h3>
-                <ProgressTracker status={statusData?.status || 'processing'} />
+                <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Recipient Number</p>
+                    <p className="font-medium">{transaction.recipientNumber}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Amount Paid</p>
+                    <p className="font-medium">${parseFloat(transaction.amount).toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Pages</p>
+                    <p className="font-medium">{transaction.pageCount}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Country</p>
+                    <p className="font-medium">{transaction.countryCode}</p>
+                  </div>
+                </div>
+
+                <ProgressTracker status={transaction.status} />
+
+                {transaction.error && (
+                  <p className="text-sm text-destructive">{transaction.error}</p>
+                )}
               </div>
             )}
 
-            <Button
-              variant="outline"
-              onClick={() => setLocation("/")}
-              className="gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Return to Home
-            </Button>
+            <div className="flex justify-between">
+              <Button
+                variant="outline"
+                onClick={() => setLocation('/')}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Home
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

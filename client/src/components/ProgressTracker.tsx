@@ -1,26 +1,32 @@
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Clock } from "lucide-react";
 
 interface ProgressTrackerProps {
-  status: 'idle' | 'processing' | 'success' | 'error';
+  status: 'pending' | 'processing' | 'completed' | 'failed';
 }
 
 export default function ProgressTracker({ status }: ProgressTrackerProps) {
   const getStatusContent = () => {
     switch (status) {
+      case 'pending':
+        return {
+          icon: <Clock className="w-6 h-6 text-primary" />,
+          text: 'Preparing to send...',
+          progress: 25
+        };
       case 'processing':
         return {
           icon: <Loader2 className="w-6 h-6 animate-spin text-primary" />,
           text: 'Sending fax...',
           progress: 50
         };
-      case 'success':
+      case 'completed':
         return {
           icon: <CheckCircle2 className="w-6 h-6 text-green-500" />,
           text: 'Fax sent successfully!',
           progress: 100
         };
-      case 'error':
+      case 'failed':
         return {
           icon: <XCircle className="w-6 h-6 text-destructive" />,
           text: 'Error sending fax',
