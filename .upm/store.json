@@ -1,0 +1,1 @@
+{"version":2,"languages":{"nodejs-npm":{"guessedImports":["@replit/vite-plugin-shadcn-theme-json","vite","tailwindcss","@vitejs/plugin-react","@replit/vite-plugin-runtime-error-modal","@tailwindcss/typography","tailwindcss-animate","drizzle-kit"],"guessedImportsHash":"736c27b01cc2268b3c105ee7788dfc4a"}}}
